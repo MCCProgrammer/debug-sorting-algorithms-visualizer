@@ -1,0 +1,131 @@
+{
+  "name": "debug-sorting-algorithms-visualizer",
+  "displayName": "Debug Sorting Algorithms Visualizer",
+  "description": "Watch your own sorting code while you debug: every step animates the swaps, shifts and merges your Python or Java code makes on an array or a linked list. Plus a playground with bubble, selection, insertion, merge, quick and heap sort.",
+  "version": "0.1.0",
+  "publisher": "MCCProgrammer",
+  "author": {
+    "name": "MCCProgrammer",
+    "email": "contact@mccprogrammer.com"
+  },
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Visualization",
+    "Education"
+  ],
+  "keywords": [
+    "sorting",
+    "sort",
+    "algorithms",
+    "visualizer",
+    "visualization",
+    "animation",
+    "debug",
+    "debugger",
+    "bubble sort",
+    "insertion sort",
+    "selection sort",
+    "merge sort",
+    "quick sort",
+    "heap sort",
+    "linked list",
+    "array",
+    "data structures",
+    "python",
+    "java",
+    "students",
+    "education"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MCCProgrammer/debug-sorting-algorithms-visualizer"
+  },
+  "bugs": {
+    "url": "https://github.com/MCCProgrammer/debug-sorting-algorithms-visualizer/issues"
+  },
+  "homepage": "https://github.com/MCCProgrammer/debug-sorting-algorithms-visualizer#readme",
+  "sponsor": {
+    "url": "https://ko-fi.com/mccprogrammer"
+  },
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onDebug"
+  ],
+  "browser": "./dist/web/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sortingVisualizer.open",
+        "title": "Open Sorting Visualizer",
+        "icon": "$(list-ordered)",
+        "category": "Sorting Visualizer"
+      },
+      {
+        "command": "sortingVisualizer.openPlayground",
+        "title": "Open Sorting Playground",
+        "icon": "$(list-ordered)",
+        "category": "Sorting Visualizer"
+      },
+      {
+        "command": "sortingVisualizer.visualizeVariable",
+        "title": "Visualize Sorting",
+        "icon": "$(list-ordered)",
+        "category": "Sorting Visualizer"
+      }
+    ],
+    "menus": {
+      "debug/toolbar": [
+        {
+          "command": "sortingVisualizer.open",
+          "when": "inDebugMode",
+          "group": "visualization"
+        }
+      ],
+      "debug/variables/context": [
+        {
+          "command": "sortingVisualizer.visualizeVariable",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "sortingVisualizer.open",
+          "when": "inDebugMode",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "sortingVisualizer.visualizeVariable",
+          "when": "false"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "check-types": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.webview.json && tsc --noEmit -p tsconfig.test.json",
+    "lint": "eslint src",
+    "test": "node esbuild.js --tests && node --test out/test/*.test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "esbuild": "^0.25.10",
+    "eslint": "^9.36.0",
+    "typescript": "^5.9.3"
+  }
+}

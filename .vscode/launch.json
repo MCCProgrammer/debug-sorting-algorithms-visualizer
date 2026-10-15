@@ -1,0 +1,21 @@
+// F5: builds the extension and opens a new window ([Extension Development Host]) with it loaded
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Run Extension (examples)",
+			"type": "extensionHost",
+			"debugWebWorkerHost": true,
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionDevelopmentKind=web",
+				"${workspaceFolder}/examples"
+			],
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"preLaunchTask": "build"
+		}
+	]
+}

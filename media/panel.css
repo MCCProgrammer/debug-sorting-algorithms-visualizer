@@ -1,0 +1,825 @@
+/* Sorting Visualizer panel. Colours come from the VS Code theme. */
+
+:root {
+	--compare: var(--vscode-charts-yellow, #cca700);
+	--swap: var(--vscode-charts-orange, #d18616);
+	--write: var(--vscode-charts-purple, #b180d7);
+	--pivot: var(--vscode-charts-red, #f14c4c);
+	--sorted: var(--vscode-charts-green, #89d185);
+	--held: var(--vscode-charts-blue, #3794ff);
+	--item: color-mix(in srgb, var(--vscode-foreground, #cccccc) 34%, var(--vscode-editor-background, #1e1e1e));
+	--item-fg: var(--vscode-editor-background, #1e1e1e);
+	--muted: var(--vscode-descriptionForeground, #9d9d9d);
+	--border: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	padding: 0 16px 24px;
+	color: var(--vscode-foreground);
+	background: var(--vscode-editor-background);
+	font-family: var(--vscode-font-family);
+	font-size: var(--vscode-font-size, 13px);
+}
+
+.hidden {
+	display: none !important;
+}
+
+button {
+	font: inherit;
+	color: var(--vscode-button-secondaryForeground);
+	background: var(--vscode-button-secondaryBackground);
+	border: 1px solid var(--vscode-button-border, transparent);
+	border-radius: 4px;
+	padding: 4px 10px;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+button:hover:not(:disabled) {
+	background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground));
+}
+
+button:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+button.primary {
+	color: var(--vscode-button-foreground);
+	background: var(--vscode-button-background);
+	min-width: 76px;
+}
+
+button.primary:hover:not(:disabled) {
+	background: var(--vscode-button-hoverBackground);
+}
+
+button.link {
+	background: none;
+	border: none;
+	color: var(--vscode-textLink-foreground);
+	padding: 4px 6px;
+}
+
+button.link:hover:not(:disabled) {
+	background: none;
+	text-decoration: underline;
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+	outline: 1px solid var(--vscode-focusBorder);
+	outline-offset: 1px;
+}
+
+select,
+input[type="text"] {
+	font: inherit;
+	color: var(--vscode-input-foreground, var(--vscode-dropdown-foreground));
+	background: var(--vscode-input-background, var(--vscode-dropdown-background));
+	border: 1px solid var(--vscode-input-border, var(--vscode-dropdown-border, transparent));
+	border-radius: 4px;
+	padding: 4px 6px;
+}
+
+/* ---------------------------------------------------------------- top bar */
+
+.topbar {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 0 8px;
+	background: var(--vscode-editor-background);
+	border-bottom: 1px solid var(--border);
+	margin-bottom: 10px;
+}
+
+.tabs,
+.view-toggle {
+	display: flex;
+	gap: 2px;
+}
+
+.tab {
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	border-radius: 0;
+	padding: 4px 10px;
+	color: var(--muted);
+	font-weight: 600;
+}
+
+.tab:hover:not(:disabled) {
+	background: none;
+	color: var(--vscode-foreground);
+}
+
+.tab.active {
+	color: var(--vscode-foreground);
+	border-bottom-color: var(--vscode-focusBorder);
+}
+
+.view-toggle button {
+	padding: 2px 8px;
+	background: none;
+	color: var(--muted);
+}
+
+.view-toggle button.active {
+	color: var(--vscode-foreground);
+	background: var(--vscode-button-secondaryBackground);
+}
+
+/* ---------------------------------------------------------------- controls */
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin-bottom: 8px;
+}
+
+.group {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.group.data {
+	flex: 1;
+	justify-content: flex-end;
+}
+
+.group.data input {
+	flex: 1;
+	min-width: 140px;
+	max-width: 360px;
+}
+
+.speed {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--muted);
+}
+
+.speed input {
+	width: 96px;
+	accent-color: var(--vscode-button-background);
+}
+
+.status {
+	color: var(--muted);
+	margin: 2px 0 10px;
+	min-height: 1.4em;
+}
+
+.status .dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	margin-right: 6px;
+	background: var(--muted);
+}
+
+.status.paused .dot {
+	background: var(--vscode-debugIcon-pauseForeground, #75beff);
+}
+
+.status.running .dot {
+	background: var(--sorted);
+}
+
+.subbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px 16px;
+	padding: 6px 0;
+	border-top: 1px solid var(--border);
+}
+
+.history {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.history button {
+	padding: 2px 8px;
+}
+
+.history span {
+	min-width: 92px;
+	text-align: center;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.counters {
+	display: flex;
+	gap: 14px;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.counters b {
+	color: var(--vscode-foreground);
+	font-weight: 600;
+}
+
+.note {
+	min-height: 1.7em;
+	margin: 6px 0 4px;
+	font-size: 1.12em;
+	font-weight: 600;
+}
+
+.note.quiet {
+	color: var(--muted);
+	font-weight: normal;
+}
+
+.note.sorted {
+	color: var(--sorted);
+	font-weight: 600;
+}
+
+.note.error {
+	color: var(--vscode-errorForeground);
+}
+
+/* ---------------------------------------------------------------- picker */
+
+.picker h2 {
+	font-size: 1.15em;
+	margin: 6px 0 2px;
+}
+
+.hint {
+	color: var(--muted);
+	margin: 4px 0 12px;
+	line-height: 1.5;
+}
+
+.candidates {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	max-width: 640px;
+}
+
+.candidate {
+	display: grid;
+	grid-template-columns: auto auto 1fr;
+	align-items: baseline;
+	gap: 10px;
+	text-align: left;
+	padding: 8px 12px;
+	background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.12));
+	border: 1px solid var(--border);
+}
+
+.candidate:hover:not(:disabled) {
+	border-color: var(--vscode-focusBorder);
+}
+
+.candidate .path {
+	font-family: var(--vscode-editor-font-family);
+	font-weight: 600;
+}
+
+.candidate .kind {
+	font-size: 0.85em;
+	color: var(--muted);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 0 6px;
+}
+
+.candidate .preview {
+	font-family: var(--vscode-editor-font-family);
+	color: var(--muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.empty-state {
+	max-width: 560px;
+	line-height: 1.6;
+}
+
+/* ---------------------------------------------------------------- playground */
+
+.pg-body {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 320px;
+	gap: 16px;
+	align-items: start;
+}
+
+@media (max-width: 760px) {
+	.pg-body {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.pseudocode {
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 10px 12px;
+	font-size: 0.92em;
+}
+
+.pseudocode .title {
+	font-weight: 600;
+	margin-bottom: 2px;
+}
+
+.complexity {
+	color: var(--muted);
+	margin-bottom: 8px;
+	line-height: 1.4;
+}
+
+.pseudocode ol {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: line;
+	font-family: var(--vscode-editor-font-family);
+}
+
+.pseudocode li {
+	counter-increment: line;
+	display: grid;
+	grid-template-columns: 1.6em 1fr;
+	white-space: pre-wrap;
+	padding: 1px 6px;
+	border-radius: 3px;
+}
+
+.pseudocode li::before {
+	content: counter(line);
+	color: var(--muted);
+	opacity: 0.6;
+}
+
+.pseudocode li.active {
+	background: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 255, 0.08));
+	outline: 1px solid var(--vscode-focusBorder);
+}
+
+/* ---------------------------------------------------------------- stage */
+
+.stage {
+	margin-top: 4px;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	min-height: 26px;
+	margin-bottom: 6px;
+}
+
+.chip {
+	font-family: var(--vscode-editor-font-family);
+	font-size: 0.92em;
+	padding: 2px 8px;
+	border-radius: 10px;
+	border: 1px solid var(--border);
+	color: var(--muted);
+}
+
+.chip b {
+	color: var(--vscode-foreground);
+	font-weight: 600;
+}
+
+.chip.changed {
+	border-color: var(--held);
+	color: var(--vscode-foreground);
+}
+
+.scroller {
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.canvas {
+	position: relative;
+	--duration: 400ms;
+}
+
+.canvas .links {
+	position: absolute;
+	left: 0;
+	top: 0;
+	pointer-events: none;
+	overflow: visible;
+}
+
+.canvas .links path {
+	fill: none;
+	stroke: var(--muted);
+	stroke-width: 1.5;
+}
+
+.canvas .links marker path {
+	fill: var(--muted);
+}
+
+.canvas .links text {
+	fill: var(--muted);
+	font-size: 13px;
+}
+
+.item,
+.pointer,
+.row-label,
+.index,
+.boundary {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+.item {
+	transition: transform var(--duration) ease-in-out, width var(--duration), height var(--duration), opacity var(--duration);
+	will-change: transform;
+}
+
+.item .box {
+	position: absolute;
+	inset: 0;
+	border-radius: 4px;
+	background: var(--item);
+	border: 1px solid transparent;
+	transition: background-color var(--duration), border-color var(--duration);
+}
+
+.item .val {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--item-fg);
+	font-family: var(--vscode-editor-font-family);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.bars .item.cell .box {
+	border-radius: 3px 3px 0 0;
+}
+
+.bars .item.cell .val {
+	inset: auto 0 100% 0;
+	height: 18px;
+	color: var(--vscode-foreground);
+	overflow: visible;
+}
+
+.tiny .item .val {
+	font-size: 10px;
+}
+
+.item.small .val {
+	font-size: 0.9em;
+}
+
+.item.node .box {
+	border-color: var(--muted);
+}
+
+.item.empty .box {
+	background: transparent;
+	border: 1px dashed var(--muted);
+	opacity: 0.6;
+}
+
+.item.entering,
+.item.leaving {
+	opacity: 0;
+}
+
+.item.leaving {
+	z-index: 0 !important;
+}
+
+.item.mark-compare .box {
+	background: var(--compare);
+}
+
+.item.mark-swap .box {
+	background: var(--swap);
+}
+
+.item.mark-write .box {
+	background: var(--write);
+}
+
+.item.mark-pivot .box {
+	background: var(--pivot);
+}
+
+.item.mark-sorted .box {
+	background: var(--sorted);
+}
+
+.item.mark-held .box {
+	background: var(--held);
+}
+
+.item.mark-compare .val,
+.item.mark-swap .val,
+.item.mark-write .val,
+.item.mark-pivot .val,
+.item.mark-sorted .val,
+.item.mark-held .val {
+	color: #1e1e1e;
+	font-weight: 600;
+}
+
+.bars .item.cell[class*="mark-"] .val,
+.bars .item.cell .val {
+	color: var(--vscode-foreground);
+	font-weight: 600;
+}
+
+.item.pointed .box {
+	box-shadow: 0 0 0 2px var(--held);
+}
+
+.item.mark-dim {
+	opacity: 0.32;
+}
+
+.item.wave .box {
+	animation: wave 520ms ease-out var(--wave) both;
+}
+
+@keyframes wave {
+	40% {
+		transform: translateY(-8px);
+		filter: brightness(1.25);
+	}
+	100% {
+		transform: none;
+	}
+}
+
+.row-label {
+	z-index: 2;
+	padding-right: 4px;
+	background: var(--vscode-editor-background);
+	font-family: var(--vscode-editor-font-family);
+	font-size: 0.9em;
+	color: var(--muted);
+	white-space: nowrap;
+	transition: transform var(--duration);
+}
+
+.row-label.small {
+	font-size: 0.82em;
+}
+
+.index {
+	font-size: 10px;
+	color: var(--muted);
+	opacity: 0.8;
+	font-variant-numeric: tabular-nums;
+}
+
+.pointer {
+	font-family: var(--vscode-editor-font-family);
+	font-size: 0.85em;
+	font-weight: 600;
+	color: var(--held);
+	white-space: nowrap;
+	transition: transform var(--duration) ease-in-out, opacity var(--duration);
+}
+
+.pointer.entering {
+	opacity: 0;
+}
+
+.pointer .arrow {
+	font-size: 0.8em;
+	margin-right: 2px;
+}
+
+.boundary {
+	width: 0;
+	border-left: 2px dashed var(--pivot);
+	transition: transform var(--duration);
+}
+
+/* ---------------------------------------------------------------- legend */
+
+.legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-top: 10px;
+	color: var(--muted);
+	font-size: 0.88em;
+}
+
+.legend span::before {
+	content: "";
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
+	margin-right: 5px;
+	vertical-align: -1px;
+	background: var(--c);
+}
+
+.legend .compare { --c: var(--compare); }
+.legend .swap { --c: var(--swap); }
+.legend .write { --c: var(--write); }
+.legend .pivot { --c: var(--pivot); }
+.legend .sorted { --c: var(--sorted); }
+.legend .held { --c: var(--held); }
+
+@media (prefers-reduced-motion: reduce) {
+	.item,
+	.pointer,
+	.row-label,
+	.boundary {
+		transition: none;
+	}
+
+	.item.wave .box {
+		animation: none;
+	}
+}
+
+/* ---------------------------------------------------------------- sizes, code view */
+
+.size {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--muted);
+}
+
+input[type="number"] {
+	font: inherit;
+	width: 64px;
+	color: var(--vscode-input-foreground);
+	background: var(--vscode-input-background);
+	border: 1px solid var(--vscode-input-border, transparent);
+	border-radius: 4px;
+	padding: 4px 6px;
+}
+
+.code-tabs {
+	display: flex;
+	gap: 2px;
+	margin: -2px 0 10px;
+}
+
+.code-tabs button {
+	padding: 2px 8px;
+	font-size: 0.92em;
+	background: none;
+	color: var(--muted);
+}
+
+.code-tabs button.active {
+	color: var(--vscode-foreground);
+	background: var(--vscode-button-secondaryBackground);
+}
+
+.pg-body.wide {
+	grid-template-columns: minmax(0, 1fr) 430px;
+}
+
+.pseudocode ol.source {
+	font-size: 0.9em;
+	max-height: 520px;
+	overflow-y: auto;
+}
+
+.pseudocode ol.source li {
+	grid-template-columns: 2.1em 1fr;
+}
+
+@media (max-width: 860px) {
+	.pg-body.wide {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/* ---------------------------------------------------------------- stats */
+
+.hint.values {
+	font-family: var(--vscode-editor-font-family);
+	font-size: 0.9em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.table-scroll {
+	overflow-x: auto;
+}
+
+table.stats {
+	border-collapse: collapse;
+	width: 100%;
+	min-width: 720px;
+	font-size: 0.94em;
+	font-variant-numeric: tabular-nums;
+}
+
+table.stats th,
+table.stats td {
+	padding: 6px 7px;
+	text-align: left;
+	border-bottom: 1px solid var(--border);
+	white-space: nowrap;
+}
+
+table.stats th {
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.9em;
+}
+
+table.stats th.group-head {
+	text-align: center;
+	color: var(--vscode-foreground);
+	border-bottom: 1px solid var(--border);
+}
+
+table.stats th.num,
+table.stats td.num {
+	text-align: right;
+	min-width: 78px;
+}
+
+table.stats td.name {
+	font-weight: 600;
+}
+
+table.stats td.o {
+	font-family: var(--vscode-editor-font-family);
+	font-size: 0.9em;
+}
+
+table.stats td.o.slow {
+	color: var(--swap);
+}
+
+table.stats td.num {
+	position: relative;
+}
+
+table.stats td.num .bar {
+	position: absolute;
+	right: 7px;
+	top: 50%;
+	height: 18px;
+	margin-top: -9px;
+	max-width: calc(100% - 14px);
+	border-radius: 3px;
+	background: var(--held);
+	opacity: 0.22;
+	transition: width 400ms ease-out;
+}
+
+table.stats td.num .value {
+	position: relative;
+}
+
+table.stats td.best .value {
+	color: var(--sorted);
+	font-weight: 600;
+}
